@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <!-- Enable responsiveness on mobile devices-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+  Fuzzing libVLC - Final Report
+</title>
+
+    
+    <meta name="description" content="
+Update: My fuzz targets have been merged into the VLC mainline tree by commits 74e7bd2, b83e9f2.
+
+
+Introduction to my GSoC project here
+
+Majority of the parsing code of VLC has been successfully setup to be fuzzed by:
+
+The demux fuzz target which creates an input stream from the fuzzed input provided by libfuzzer,
+probes and loads an appropriate demux module and demultiplexes the input into the various output
+elementary streams, minimally handling all the ES callbacks and calling various demux_Control&#x27;s to
+increase code coverage.
+
+">
+
+    
+        <meta name="keywords" content="web, android, technology, docker, javascript, java, python, blog, computer engineering, shaleen jain, shalzz, shaleen, jain, C/C++, rust, C, C++, GO-lang, libfuzzer, libvlc, vlc, fuzzing, gsoc-2017, gsoc">
+    
+
+
+    
+        <meta name="author" content="Shaleen Jain">
+
+        <link rel="author" href="https:&#x2F;&#x2F;twitter.com&#x2F;shalzzj">
+        
+            <link href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;blog&#x2F;fuzzing-vlc-4&#x2F;" rel="canonical">
+        
+         <link rel="alternate" type="application/atom+xml" title="RSS" href="https://shaleenjain.com/atom.xml">
+    
+
+    
+    
+        <meta name="twitter:site" content="@shalzzj">
+        <meta name="twitter:creator" content="@shalzzj">
+
+        <meta property="og:type" content="article">
+        
+            <meta property="og:url" content="https:&#x2F;&#x2F;shaleenjain.com&#x2F;blog&#x2F;fuzzing-vlc-4&#x2F;">
+        
+
+        
+        <meta property="og:description" content="Personal and technical musings">
+        
+    
+    <meta name="twitter:title" content="Fuzzing libVLC - Final Report &mdash; Shaleen Jain">
+    <meta property="og:title" content="Fuzzing libVLC - Final Report">
+
+
+    
+    
+
+
+    
+        <link rel="apple-touch-icon" sizes="180x180" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;favicon-16x16.png">
+        <link rel="manifest" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;manifest.json">
+        <link rel="mask-icon" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;safari-pinned-tab.svg">
+        <link rel="shortcut icon" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;favicon.ico">
+        <meta name="msapplication-config" content="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;browserconfig.xml">
+        <meta name="theme-color" content="#ffffff">
+    
+
+    
+
+    
+        <style>
+            /*! normalize.css v3.0.2 | MIT License | git.io/normalize */html{font-family:"sans-serif";-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary{display:block}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}a{background-color:transparent}a:active,a:hover{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}dfn{font-style:italic}h1{font-size:2em;margin:0.67em 0}mark{background:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:0px}hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}pre{overflow:auto}code,kbd,pre,samp{font-family:monospace, monospace;font-size:1em}button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}button{overflow:visible}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}input{line-height:normal}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{height:auto}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;padding:0}textarea{overflow:auto}optgroup{font-weight:bold}table{border-collapse:collapse;border-spacing:0}td,th{padding:0}html{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}.image-row{display:flex;flex-flow:row wrap;align-items:center;padding:0 4px}.image-column{flex:50%;max-width:50%;padding:0 4px;border-radius:8px;width:100%;height:auto}@media screen and (max-width: 42em){.image-column{flex:100%;max-width:100%}}.text-center{text-align:center}.text-right{text-align:right}.fa-social-icons{font-size:2rem;margin-top:-1rem}.fa-social-icons a{border:0;margin-right:0.1rem}.fa-social-icons a:last-child{margin-right:0}.masthead,.content,.footer{max-width:42em;margin-left:auto;margin-right:auto}.masthead:after,.post:after,.related:after,.recent:after,.page:after,.comments:after,.index:after{display:block;content:"";width:150px;height:1px;margin:2rem auto;background-color:#c4c4c4}.related .related-title,.related .recent-title,.recent .related-title,.recent .recent-title{margin-top:0}.masthead{margin-bottom:2rem}.masthead a{color:#111}.masthead .masthead-title{margin:0;padding:0}.masthead .masthead-title a{text-decoration:none;border:0}@media (min-width: 42em){.masthead .masthead-title{float:left}}.masthead .masthead-nav{display:inline-block;padding-left:0;margin-bottom:0}.masthead .masthead-nav a{text-decoration:none;border:0}.masthead .masthead-nav a+a{margin-left:0.6rem}@media (min-width: 42em){.masthead{padding-top:1rem;text-align:right}}.footer{margin-bottom:1rem;text-align:center}.footer a[rel="license"]:first-child{display:inline-block;margin:0;padding:0;border:0;text-decoration:none}.footer .icon-square{color:transparent}.footer .icon-square:hover{color:#252525}.footer .fa-stack-1x{color:black}.footer p>span{font-size:110%}.footer p>span a{padding:2px;border:0}.footer p>span i:hover{color:white}.footer p p:last-child{margin-bottom:0}.posts{padding-bottom:1rem}.posts .posts-item{margin-bottom:1rem}@media (min-width: 42em){.posts .posts-item{margin-bottom:0.2rem}}.posts a{border:0}.posts time{display:block;color:#848484}@media (min-width: 42em){.posts time{margin-top:2px;float:right}}.next,.previous{font-weight:600;font-size:20px;transition:transform 0.3s ease-out}.next{float:right}.next:hover{transform:translateX(4px)}.previous{float:left}.previous:hover{transform:translateX(-4px)}html,body{margin:0}html{font-family:"Lora","sans-serif";font-size:18px;line-height:1.6}@media (min-width: 42em){html{font-size:20px}}body{padding:2rem 1.5rem;color:#444;background-color:#fff;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}a{color:#afd700;text-decoration:none;border-bottom:1px solid #afd700}a:hover,a:focus{background-color:#afd700;color:white}a strong{color:inherit}img{display:block;max-width:100%;margin:0 0 1rem;border-radius:5px}table{margin-bottom:1rem;width:100%;font-size:85%;border:1px solid #c4c4c4;border-collapse:collapse}.js-file-line-container td{border:none}td,th{padding:.25rem .5rem;border:1px solid #c4c4c4}th{text-align:left}tbody tr:nth-child(even) td,tbody tr:nth-child(even) th{background-color:#fff}tbody tr:nth-child(odd) td,tbody tr:nth-child(odd) th{background-color:#fafafa}
+
+        </style>
+    
+
+    
+      <style>
+        /* latin */
+        @font-face {
+          font-family: 'Lora';
+          font-style: italic;
+          font-weight: 400;
+          font-display: swap;
+          src: url(https://shaleenjain.com/fonts/0QI8MX1D_JOuMw_hLdO6T2wV9KnW-MoFoq92nA.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        /* latin */
+        @font-face {
+          font-family: 'Lora';
+          font-style: normal;
+          font-weight: 400;
+          font-display: swap;
+          src: url(https://shaleenjain.com/fonts/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkq0.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        /* latin */
+        @font-face {
+          font-family: 'Lora';
+          font-style: normal;
+          font-weight: 700;
+          font-display: swap;
+          src: url(https://shaleenjain.com/fonts/0QI6MX1D_JOuGQbT0gvTJPa787z5vBJBkq0.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+      </style>
+    
+  </head>
+
+  <body>
+    
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;style.css">
+    
+
+    
+        <header class="masthead">
+          <h3 class="masthead-title">
+            <a href="https:&#x2F;&#x2F;shaleenjain.com">Shaleen Jain</a>
+          </h3>
+          <nav class="masthead-nav">
+            
+            <a href="&#x2F;blog" class="nav-item">Blog</a>
+            
+          </nav>
+        </header>
+    
+
+
+    <main class="content">
+        
+
+<article class="post">
+  <header class="post-header">
+    <time datetime="2017-08-28" class="post-date">
+        28 Aug 2017
+    </time>
+        
+        <small>
+            · 
+    <span class="reading-time" title="Estimated read time">
+      
+        3 min read
+      
+    </span>
+
+        </small>
+    <h1 class="post-title">Fuzzing libVLC - Final Report</h1>
+  </header>
+
+  <blockquote>
+<p>Update: My fuzz targets have been merged into the VLC mainline tree by commits <a href="https://github.com/videolan/vlc/commit/74e7bd240d5b239d0eeb3b67a7511b8b83cb6694">74e7bd2</a>, <a href="https://github.com/videolan/vlc/commit/b83e9fe08d12ae798390bfa64c08096801fcd8c1">b83e9f2</a>.</p>
+</blockquote>
+<blockquote>
+<p><em>Introduction to my GSoC project <a href="https://shaleenjain.com/blog/why-fuzz-vlc/">here</a></em></p>
+</blockquote>
+<p>Majority of the parsing code of VLC has been successfully setup to be fuzzed by:</p>
+<ul>
+<li>The demux fuzz target which creates an input stream from the fuzzed input provided by libfuzzer,
+probes and loads an appropriate demux module and demultiplexes the input into the various output
+elementary streams, minimally handling all the ES callbacks and calling various demux_Control's to
+increase code coverage.</li>
+</ul>
+<span id="continue-reading"></span>
+<ul>
+<li>The decoder fuzz target by creating a packetizer and a decoder instance while ignoring the
+stream out, packetizing the input block and then proceeding to decode the various packetized blocks.
+Hardware decoding as been disabled, so that we only test the codecs included in VLC and the module itself
+though many of the codecs are provided by 3rd party libraries.</li>
+</ul>
+<p>These two fuzz targets cover over 35 demux modules and 64 different codec modules or 163k lines of code
+which is 20.7% of the VLC code base.</p>
+<p>Actual code coverage as measured by libFuzzer would be different if not more but since as of now
+VLC is unable to build with the clang linker, I do not have that coverage information.</p>
+<h4 id="some-additional-challenges-and-features-were"><a class="zola-anchor" href="#some-additional-challenges-and-features-were" aria-label="Anchor link for: some-additional-challenges-and-features-were">🔗</a>
+Some additional challenges and features were</h4>
+<ul>
+<li>adding first class support for sanitizers in the VLC build system.
+You can now compile VLC with sanitizers just by using the --with-sanitizer switch.
+These changes are merged into the mainline, more details <a href="http://git.videolan.org/?p=vlc.git;a=commit;h=2bc9957c615d9505f89d88511a0d6ef3889b392b">here</a></li>
+<li>finding and adding sample inputs of various video file formats and containers
+and elementary streams encoded with different codecs for the fuzz targets</li>
+<li>Creating a dictionary of various tokens and FourCC's used to separate the various
+chunks and atoms in container formats.</li>
+</ul>
+<h4 id="code"><a class="zola-anchor" href="#code" aria-label="Anchor link for: code">🔗</a>
+Code</h4>
+<p>Since VideoLAN has still not decided whether to use Google's OSS-fuzz or agree to their terms
+and doesn't want this code to be misused by hackers, they have decided not to keep this in
+the mainline tree to minimize exposure.</p>
+<p>And so here are all of my out of tree patches:</p>
+<ul>
+<li><a href="http://git.videolan.org/?p=vlc.git;a=commit;h=57949e7a9b9da4d9130db0359199b16fca1b061c">57949e7a9b9da4d9130db0359199b16fca1b061c</a> (merged)</li>
+<li><a href="http://git.videolan.org/?p=vlc.git;a=commit;h=2bc9957c615d9505f89d88511a0d6ef3889b392b">2bc9957c615d9505f89d88511a0d6ef3889b392b</a> (merged)</li>
+<li><a href="https://code.videolan.org/GSoC2017/shalzz/vlc/commit/583b4b6ed83e64cf52ab75d0d5163a360d626ec6">583b4b6ed83e64cf52ab75d0d5163a360d626ec6</a></li>
+<li><a href="https://code.videolan.org/GSoC2017/shalzz/vlc/commit/89cc31145c47cb3769d9c3258a1d2baa4d563c37">89cc31145c47cb3769d9c3258a1d2baa4d563c37</a></li>
+<li><a href="https://code.videolan.org/GSoC2017/shalzz/vlc/commit/c893f6597efc23cf234af12f09d05510c0c744c3">c893f6597efc23cf234af12f09d05510c0c744c3</a></li>
+<li><a href="https://code.videolan.org/GSoC2017/shalzz/vlc/commit/ef80ea254005e84589dd310abe87ce0d3d2a0c90">ef80ea254005e84589dd310abe87ce0d3d2a0c90</a></li>
+<li><a href="https://code.videolan.org/GSoC2017/shalzz/vlc/commit/f03556549bd074f724d47901bd58d730d12998d6">f03556549bd074f724d47901bd58d730d12998d6</a></li>
+<li><a href="https://code.videolan.org/GSoC2017/shalzz/vlc/commit/23f2e30f4a6241bc3476414ac187d1e7e8169dd3">23f2e30f4a6241bc3476414ac187d1e7e8169dd3</a></li>
+</ul>
+<p>My main work repo has been <a href="https://code.videolan.org/GSoC2017/shalzz/vlc/">code.videolan.org/GSoC2017/shalzz/vlc</a> with all my commit history
+in the master branch and final patches in the <a href="https://code.videolan.org/GSoC2017/shalzz/vlc/tree/release">release</a> branch.
+There is a clone of the repo on <a href="https://github.com/Shalzz/vlc">github</a> as well.</p>
+<p>To run the code,</p>
+<ol>
+<li>clone the repo and build vlc instrumented with one or more of the sanitizers using the new
+<code>--with-sanitizer=</code> switch.</li>
+<li>Get and build libFuzzer by changing into the test/fuzz/ directory and using the <code>./build-libfuzzer.sh</code> script</li>
+<li>Build the fuzz target binaries by running <code>make check</code>.</li>
+<li>Run the fuzz targets manually or by using the <code>./run-fuzzer.sh</code> helper script</li>
+</ol>
+<h4 id="bug-trophy"><a class="zola-anchor" href="#bug-trophy" aria-label="Anchor link for: bug-trophy">🔗</a>
+Bug Trophy</h4>
+<p>As for the number of bugs found by the initial fuzzing done on my small laptop there have been quite a few, all of which have been fixed, by me and other VLC developers.
+Few of them:</p>
+<ul>
+<li><a href="https://github.com/videolan/vlc/commit/6c947b775d4d6c6ed07ebde140bddd3a2007b41a">6c947b775d4d6c6ed07ebde140bddd3a2007b41a</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/a672ea060efbb5898e1d80327f5909a43e8b57d8">a672ea060efbb5898e1d80327f5909a43e8b57d8</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/b2fb79e3201c5ce77a176b52936835ce195aa986">b2fb79e3201c5ce77a176b52936835ce195aa986</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/1de4047a25cd336d1539ea0867c29180928dd230">1de4047a25cd336d1539ea0867c29180928dd230</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/7033852e1a8292734e1d5800bec864bb5fb24c30">7033852e1a8292734e1d5800bec864bb5fb24c30</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/3266d738e906b38b53f7936f58565441d0652713">3266d738e906b38b53f7936f58565441d0652713</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/4b76784615f74254a7b66e34ff78393b44af2ed5">4b76784615f74254a7b66e34ff78393b44af2ed5</a></li>
+<li><a href="https://github.com/videolan/vlc/commit/7eea089393d6fc1de3436b4d486a466d14566a04">7eea089393d6fc1de3436b4d486a466d14566a04</a></li>
+</ul>
+<h4 id="continuous-fuzzing"><a class="zola-anchor" href="#continuous-fuzzing" aria-label="Anchor link for: continuous-fuzzing">🔗</a>
+Continuous Fuzzing</h4>
+<p>One thing that's left to do is setting up of a continuous fuzzing server.
+Since OSS-fuzz is not in the picture right now, that is something VLC devs
+will have to do on their own infrastructure.</p>
+
+</article>
+
+
+<div>
+ Liked this article? Buy me a beer on the Bitcoin Lightning Network
+<div id="tippin-button" data-dest="shalzzj"></div>
+<script src="https://tippin.me/buttons/tip.js" type="text/javascript"></script>
+<br/>
+</div>
+
+
+
+  <p>Got any questions or comments? Drop me a message on <a href="https:&#x2F;&#x2F;twitter.com&#x2F;shalzzj" rel="nofollow">Twitter @shalzzj</a> or comment below.</p>
+
+
+
+
+<div class="comments" id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_config = function () {
+        this.page.url = 'https:&#x2F;&#x2F;shaleenjain.com&#x2F;blog&#x2F;fuzzing-vlc-4&#x2F;';
+        this.page.identifier = 'blog/fuzzing-vlc-4';
+        this.page.title = 'Fuzzing libVLC - Final Report';
+    };
+    var disqus_shortname = 'shalzz';
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        dsq.setAttribute('data-timestamp', +new Date());
+        (document.head || document.body).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+
+
+
+    </main>
+
+    
+        <footer class="footer">
+          <p><small>
+            This work is licensed under the <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            CC BY-SA 4.0</a> license.
+          <br/>
+          <a href="https://shaleenjain.com/atom.xml">RSS Feed</a> •
+          <a href="https://shaleenjain.com/donate/">Support my work</a>!
+          </small></p>
+        </footer>
+    
+
+    
+    
+        <script data-goatcounter="https://personal.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    
+    
+  </body>
+</html>

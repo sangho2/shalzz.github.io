@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+    <!-- Enable responsiveness on mobile devices-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+  Home Media Streaming Server with Wireguard and OpenWRT
+</title>
+
+    
+    <meta name="description" content="🔗
+Background and motivation
+Long gone are the good ol&#x27; days when Netflix used to be the only streaming service
+you subscribed to and sparingly shared with your friends and family
+providing access to virtually every video content out there.
+But now if you haven&#x27;t noticed there&#x27;s a new streaming service rolled out by 
+every other big producer and publisher with their exclusive content as the only selling
+point to drive adoption.
+In this new world, for some it&#x27;s perfectly reasonable to subscribe to every
+service exclusively streaming the new TV series. For others it&#x27;s the constant
+juggle between one or two services every month.
+">
+
+    
+        <meta name="keywords" content="web, android, technology, docker, javascript, java, python, blog, computer engineering, shaleen jain, shalzz, shaleen, jain, C/C++, rust, C, C++, GO-lang, openwrt, wireguard, streaming, video, media, home media, samba server, samba, torrent, transmission, netflix, piracy, netflix alternative, home server, openwrt samba, nas, ddns, network attached storage, home media server, media server, nas with openwrt">
+    
+
+
+    
+        <meta name="author" content="Shaleen Jain">
+
+        <link rel="author" href="https:&#x2F;&#x2F;twitter.com&#x2F;shalzzj">
+        
+            <link href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;blog&#x2F;streaming-server&#x2F;" rel="canonical">
+        
+         <link rel="alternate" type="application/atom+xml" title="RSS" href="https://shaleenjain.com/atom.xml">
+    
+
+    
+    
+        <meta name="twitter:site" content="@shalzzj">
+        <meta name="twitter:creator" content="@shalzzj">
+
+        <meta property="og:type" content="article">
+        
+            <meta property="og:url" content="https:&#x2F;&#x2F;shaleenjain.com&#x2F;blog&#x2F;streaming-server&#x2F;">
+        
+
+        
+        <meta property="og:description" content="Personal and technical musings">
+        
+    
+    <meta name="twitter:title" content="Home Media Streaming Server with Wireguard and OpenWRT &mdash; Shaleen Jain">
+    <meta property="og:title" content="Home Media Streaming Server with Wireguard and OpenWRT">
+
+
+    
+    
+
+
+    
+        <link rel="apple-touch-icon" sizes="180x180" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;favicon-16x16.png">
+        <link rel="manifest" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;manifest.json">
+        <link rel="mask-icon" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;safari-pinned-tab.svg">
+        <link rel="shortcut icon" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;favicon.ico">
+        <meta name="msapplication-config" content="https:&#x2F;&#x2F;shaleenjain.com&#x2F;icons&#x2F;browserconfig.xml">
+        <meta name="theme-color" content="#ffffff">
+    
+
+    
+
+    
+        <style>
+            /*! normalize.css v3.0.2 | MIT License | git.io/normalize */html{font-family:"sans-serif";-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary{display:block}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}a{background-color:transparent}a:active,a:hover{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}dfn{font-style:italic}h1{font-size:2em;margin:0.67em 0}mark{background:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:0px}hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}pre{overflow:auto}code,kbd,pre,samp{font-family:monospace, monospace;font-size:1em}button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}button{overflow:visible}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}input{line-height:normal}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{height:auto}input[type="search"]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:0.35em 0.625em 0.75em}legend{border:0;padding:0}textarea{overflow:auto}optgroup{font-weight:bold}table{border-collapse:collapse;border-spacing:0}td,th{padding:0}html{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}.image-row{display:flex;flex-flow:row wrap;align-items:center;padding:0 4px}.image-column{flex:50%;max-width:50%;padding:0 4px;border-radius:8px;width:100%;height:auto}@media screen and (max-width: 42em){.image-column{flex:100%;max-width:100%}}.text-center{text-align:center}.text-right{text-align:right}.fa-social-icons{font-size:2rem;margin-top:-1rem}.fa-social-icons a{border:0;margin-right:0.1rem}.fa-social-icons a:last-child{margin-right:0}.masthead,.content,.footer{max-width:42em;margin-left:auto;margin-right:auto}.masthead:after,.post:after,.related:after,.recent:after,.page:after,.comments:after,.index:after{display:block;content:"";width:150px;height:1px;margin:2rem auto;background-color:#c4c4c4}.related .related-title,.related .recent-title,.recent .related-title,.recent .recent-title{margin-top:0}.masthead{margin-bottom:2rem}.masthead a{color:#111}.masthead .masthead-title{margin:0;padding:0}.masthead .masthead-title a{text-decoration:none;border:0}@media (min-width: 42em){.masthead .masthead-title{float:left}}.masthead .masthead-nav{display:inline-block;padding-left:0;margin-bottom:0}.masthead .masthead-nav a{text-decoration:none;border:0}.masthead .masthead-nav a+a{margin-left:0.6rem}@media (min-width: 42em){.masthead{padding-top:1rem;text-align:right}}.footer{margin-bottom:1rem;text-align:center}.footer a[rel="license"]:first-child{display:inline-block;margin:0;padding:0;border:0;text-decoration:none}.footer .icon-square{color:transparent}.footer .icon-square:hover{color:#252525}.footer .fa-stack-1x{color:black}.footer p>span{font-size:110%}.footer p>span a{padding:2px;border:0}.footer p>span i:hover{color:white}.footer p p:last-child{margin-bottom:0}.posts{padding-bottom:1rem}.posts .posts-item{margin-bottom:1rem}@media (min-width: 42em){.posts .posts-item{margin-bottom:0.2rem}}.posts a{border:0}.posts time{display:block;color:#848484}@media (min-width: 42em){.posts time{margin-top:2px;float:right}}.next,.previous{font-weight:600;font-size:20px;transition:transform 0.3s ease-out}.next{float:right}.next:hover{transform:translateX(4px)}.previous{float:left}.previous:hover{transform:translateX(-4px)}html,body{margin:0}html{font-family:"Lora","sans-serif";font-size:18px;line-height:1.6}@media (min-width: 42em){html{font-size:20px}}body{padding:2rem 1.5rem;color:#444;background-color:#fff;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}a{color:#afd700;text-decoration:none;border-bottom:1px solid #afd700}a:hover,a:focus{background-color:#afd700;color:white}a strong{color:inherit}img{display:block;max-width:100%;margin:0 0 1rem;border-radius:5px}table{margin-bottom:1rem;width:100%;font-size:85%;border:1px solid #c4c4c4;border-collapse:collapse}.js-file-line-container td{border:none}td,th{padding:.25rem .5rem;border:1px solid #c4c4c4}th{text-align:left}tbody tr:nth-child(even) td,tbody tr:nth-child(even) th{background-color:#fff}tbody tr:nth-child(odd) td,tbody tr:nth-child(odd) th{background-color:#fafafa}
+
+        </style>
+    
+
+    
+      <style>
+        /* latin */
+        @font-face {
+          font-family: 'Lora';
+          font-style: italic;
+          font-weight: 400;
+          font-display: swap;
+          src: url(https://shaleenjain.com/fonts/0QI8MX1D_JOuMw_hLdO6T2wV9KnW-MoFoq92nA.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        /* latin */
+        @font-face {
+          font-family: 'Lora';
+          font-style: normal;
+          font-weight: 400;
+          font-display: swap;
+          src: url(https://shaleenjain.com/fonts/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkq0.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+        /* latin */
+        @font-face {
+          font-family: 'Lora';
+          font-style: normal;
+          font-weight: 700;
+          font-display: swap;
+          src: url(https://shaleenjain.com/fonts/0QI6MX1D_JOuGQbT0gvTJPa787z5vBJBkq0.woff2) format('woff2');
+          unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+        }
+      </style>
+    
+  </head>
+
+  <body>
+    
+        <link rel="stylesheet" href="https:&#x2F;&#x2F;shaleenjain.com&#x2F;style.css">
+    
+
+    
+        <header class="masthead">
+          <h3 class="masthead-title">
+            <a href="https:&#x2F;&#x2F;shaleenjain.com">Shaleen Jain</a>
+          </h3>
+          <nav class="masthead-nav">
+            
+            <a href="&#x2F;blog" class="nav-item">Blog</a>
+            
+          </nav>
+        </header>
+    
+
+
+    <main class="content">
+        
+
+<article class="post">
+  <header class="post-header">
+    <time datetime="2019-12-01" class="post-date">
+        01 Dec 2019
+    </time>
+        
+        <small>
+            · 
+    <span class="reading-time" title="Estimated read time">
+      
+        5 min read
+      
+    </span>
+
+        </small>
+    <h1 class="post-title">Home Media Streaming Server with Wireguard and OpenWRT</h1>
+  </header>
+
+  <h3 id="background-and-motivation"><a class="zola-anchor" href="#background-and-motivation" aria-label="Anchor link for: background-and-motivation">🔗</a>
+Background and motivation</h3>
+<p>Long gone are the good ol' days when Netflix used to be the only streaming service
+you subscribed to and sparingly shared with your friends and family
+providing access to virtually every video content out there.
+But now if you haven't noticed there's a new streaming service rolled out by 
+every other big producer and publisher with their exclusive content as the only selling
+point to drive adoption.</p>
+<p>In this new world, for some it's perfectly reasonable to subscribe to every
+service exclusively streaming the new TV series. For others it's the constant
+juggle between one or two services every month.</p>
+<span id="continue-reading"></span>
+<p>If like me you don't have any qualms with piracy and are relatively safe from
+law enforcement in your jurisdiction then you might say there's an easy solution
+and you'd not be alone. The fragmentation of the streaming market is the single
+biggest reason for the subsequent re-rise of the piracy industry (<a href="https://www.vice.com/en_us/article/d3q45v/bittorrent-usage-increases-netflix-streaming-sites">vice.com</a>).</p>
+<p>Pirating leads to some problems of it's own though, that of storage space.
+Deleting old files to make space for new downloads, being tied down to a single
+device, scrubbing to exactly where you left off an episode on another device
+after taking the pains to copy the gigabytes of data between devices.</p>
+<p>This inspired me to come up with an alternative that solves most if not all
+of the paper cuts from pirating.</p>
+
+    <details open id = "toc-inline">
+        <summary><b>Table of Contents</b></summary>
+        <ul>
+            <li>
+                <a href="#background-and-motivation">Background and motivation</a>
+                
+            </li><li>
+                <a href="#abstract">Abstract</a>
+                
+            </li><li>
+                <a href="#prerequisites">Prerequisites</a>
+                
+            </li><li>
+                <a href="#disclaimer">Disclaimer</a>
+                
+            </li><li>
+                <a href="#ingredients-requirements">Ingredients/Requirements</a>
+                
+            </li><li>
+                <a href="#architecture">Architecture</a>
+                <ul>
+                    <li>
+                        <a href="#samba">Samba</a>
+                    </li><li>
+                        <a href="#wireguard">Wireguard</a>
+                    </li><li>
+                        <a href="#transmission">Transmission</a>
+                    </li><li>
+                        <a href="#ddns">DDNS</a>
+                    </li>
+                </ul>
+            </li><li>
+                <a href="#conclusion">Conclusion</a>
+                
+            </li>
+        </ul>
+    </details>
+
+<h3 id="abstract"><a class="zola-anchor" href="#abstract" aria-label="Anchor link for: abstract">🔗</a>
+Abstract</h3>
+<p>This is an overview of how you can effectively have your own streaming server 
+with zero running costs, setup at your home with consumer hardware you most likely
+already own, allowing you to stream your entire media library via your WI-FI 
+connection when you're at home and through a <a href="https://wireguard.com">Wireguard</a> VPN connecting to your home
+router when you're on the move.</p>
+<h3 id="prerequisites"><a class="zola-anchor" href="#prerequisites" aria-label="Anchor link for: prerequisites">🔗</a>
+Prerequisites</h3>
+<p>Most of the hardware used here is pretty standard and should be easy to acquire.
+But this whole setup is contingent on having a router with <a href="https://openwrt.org">OpenWRT</a> installed
+or one that is supported by the OpenWRT project and you are not afraid of tinkering
+with you're router to install OpenWRT on it yourself.
+Besides the hardware requirements, general familiarity with *nix systems and
+command line would make this very easy for you. </p>
+<h3 id="disclaimer"><a class="zola-anchor" href="#disclaimer" aria-label="Anchor link for: disclaimer">🔗</a>
+Disclaimer</h3>
+<p>This is not going to be a step-by-step tutorial since the underlying technology
+and the CLI is constantly evolving and changing. Rather I'm going to just
+describe the architecture and link to the OpenWRT wiki where necessary.</p>
+<h3 id="ingredients-requirements"><a class="zola-anchor" href="#ingredients-requirements" aria-label="Anchor link for: ingredients-requirements">🔗</a>
+Ingredients/Requirements</h3>
+<p>The actual hardware requirements are:</p>
+<ul>
+<li>A recent router with at least one USB port and OpenWRT installed.</li>
+<li>A portable USB hard-drive/SSD or a NAS box with a USB connection.</li>
+<li>An Ethernet cable in case you mess up your WiFi/firewall config.</li>
+</ul>
+<h3 id="architecture"><a class="zola-anchor" href="#architecture" aria-label="Anchor link for: architecture">🔗</a>
+Architecture</h3>
+<p>Our Software stack would comprise of mainly these four main technologies
+each of which I will explain in detail:</p>
+<ul>
+<li>Samba server: Filesystem over the Network.</li>
+<li>Wireguard peers: A secure VPN</li>
+<li>libtransmission: A torrent client</li>
+<li>DDNS: Dynamic DNS to update our router IP address to a DNS record.</li>
+</ul>
+<figure style="width:75%;margin:auto;">
+    <img src="https:&#x2F;&#x2F;shaleenjain.com&#x2F;processed_images&#x2F;480978d3734bd84200.png"  />
+<figcaption style="text-align:center;">Fig 1: Network Architecture</figcaption>
+<br/>
+</figure>
+<h4 id="samba"><a class="zola-anchor" href="#samba" aria-label="Anchor link for: samba">🔗</a>
+Samba</h4>
+<p>The premiss of our setup is having a Network Attached Storage (NAS). Off the shelf
+NAS boxes are generally more expensive but they do allow you to setup hard-drives
+in a RAID configuration providing redundancy and backup. If you already have a 
+NAS box you can use it instead otherwise if you're not doing any content creation
+and don't need high write throughput then a single drive is more than enough.</p>
+<p>There are two main filesystem-over-the-network solutions</p>
+<ul>
+<li>NFS: the Linux native Network File System.</li>
+<li>Server Message Block (SMB): A widely supported protocol with Microsoft's
+own implementation for Windows.</li>
+</ul>
+<p>Since SMB is a more widely supported protocol and we need to be able to access our
+NAS from any client device including Windows and MacOS we will be using Samba,
+a SMB implementation for Linux.</p>
+<p>You can find the details on <a href="https://openwrt.org/docs/guide-user/services/nas/cifs.server">how to setup Samba</a> on OpenWRT on the wiki.</p>
+<p>To Access the Samba drive from a client point it to the IP address of your router.
+For example if you router has an IP address <code>192.168.1.1</code> then you can access the
+drive at <code>smb://192.168.1.1</code>.</p>
+<h4 id="wireguard"><a class="zola-anchor" href="#wireguard" aria-label="Anchor link for: wireguard">🔗</a>
+Wireguard</h4>
+<p>Wireguard is a new modern and secure VPN in-built into the Linux kernel that is based
+on public key cryptography for peer verification and authentication.
+Wireguard is simple to setup yet performant making it the ideal VPN
+to use on embedded devices like home routers unlike OpenVPN which has a 
+huge dependency on OpenSSL which takes up a lot more flash storage space
+as well as being highly CPU intensive.</p>
+<p>Setting up wireguard on OpenWRT is not very different from setting it up on any
+other device besides installing the required packages which you can find <a href="https://openwrt.org/docs/guide-user/services/vpn/wireguard/start">here</a>.</p>
+<p>For a better more general guide to configuring wireguard see this excellent <a href="https://www.stavros.io/posts/how-to-configure-wireguard/">blog
+post</a> by Stavros Korokithakis.</p>
+<h4 id="transmission"><a class="zola-anchor" href="#transmission" aria-label="Anchor link for: transmission">🔗</a>
+Transmission</h4>
+<p>libtransmission is a small library to easily download torrents onto any 
+device though for it to be useful you often have to pull in at least one
+additional library that interacts with libtransmission over RPC.
+Only caveat with libtransmission I faced especially on my router was that 
+it put a non-trivial CPU load while actively downloading a torrent, I'm not sure
+if it's because of my CPU not being capable enough or me having something misconfigured.
+But it's generally not an issue if you don't have something downloading 24/7.</p>
+<p>Details on how to install and configure transmission are <a href="https://openwrt.org/docs/guide-user/services/downloading_and_filesharing/transmission">here</a>.</p>
+<p>Once you have everything setup correctly along with wireguard you can effectively
+login from anywhere and queue up a torrent to download with the full bandwidth
+of your home connection directly onto the hard drive connected to your router.</p>
+<figure style="width:85%;margin:auto;">
+    <img src="https:&#x2F;&#x2F;shaleenjain.com&#x2F;processed_images&#x2F;e67f5e31147185fb00.png"  />
+<figcaption style="text-align:center;">Fig 2: Transmission Web running on a home router</figcaption>
+<br/>
+</figure>
+<h4 id="ddns"><a class="zola-anchor" href="#ddns" aria-label="Anchor link for: ddns">🔗</a>
+DDNS</h4>
+<p>This is something we shouldn't really need but alas we require unless you have a static
+IP connection for your home!
+With the way wireguard works we need to know the IP addresses of all our peers
+we wish to connect to. There is some work going on that could make wireguard work
+with <a href="https://github.com/WireGuard/wg-dynamic/blob/master/docs/idea.md">dynamic IP address</a> but until that is stabilised we need to use hacks such
+as DDNS.</p>
+<p>Majority of ISPs allocate a new IP address to home gateways every time it tries
+to connect. DDNS is an old and reliable way for to be updated every time the IP address
+changes.</p>
+<p>Details on how to get DDNS working on OpenWRT can be found <a href="https://openwrt.org/docs/guide-user/base-system/ddns">here</a>.
+There are some recommendation of good DDNS providers on the wiki. I personally 
+prefer to use <a href="https://www.dynu.com/en-US/DynamicDNS">dynu</a> with <a href="https://www.dnsomatic.com/">DNS-o-Matic</a>.
+DNS-o-Matic allows you to multiplex to various DDNS providers making sure you have
+backups in case of any DNS outage.</p>
+<h3 id="conclusion"><a class="zola-anchor" href="#conclusion" aria-label="Anchor link for: conclusion">🔗</a>
+Conclusion</h3>
+<p>After this I hope you have a better idea of how you can run your own media streaming
+server and tune it to your own liking. If you liked it please share with others
+and help spread the decentralization of the internet and be in control of you own
+data and preferences.</p>
+
+</article>
+
+
+<div>
+ Liked this article? Buy me a beer on the Bitcoin Lightning Network
+<div id="tippin-button" data-dest="shalzzj"></div>
+<script src="https://tippin.me/buttons/tip.js" type="text/javascript"></script>
+<br/>
+</div>
+
+
+
+  <p>Got any questions or comments? Drop me a message on <a href="https:&#x2F;&#x2F;twitter.com&#x2F;shalzzj" rel="nofollow">Twitter @shalzzj</a> or comment below.</p>
+
+
+
+
+<div class="comments" id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_config = function () {
+        this.page.url = 'https:&#x2F;&#x2F;shaleenjain.com&#x2F;blog&#x2F;streaming-server&#x2F;';
+        this.page.identifier = 'blog/streaming-server';
+        this.page.title = 'Home Media Streaming Server with Wireguard and OpenWRT';
+    };
+    var disqus_shortname = 'shalzz';
+    (function() {
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        dsq.setAttribute('data-timestamp', +new Date());
+        (document.head || document.body).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+
+
+
+
+    </main>
+
+    
+        <footer class="footer">
+          <p><small>
+            This work is licensed under the <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            CC BY-SA 4.0</a> license.
+          <br/>
+          <a href="https://shaleenjain.com/atom.xml">RSS Feed</a> •
+          <a href="https://shaleenjain.com/donate/">Support my work</a>!
+          </small></p>
+        </footer>
+    
+
+    
+    
+        <script data-goatcounter="https://personal.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    
+    
+  </body>
+</html>
